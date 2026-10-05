@@ -25,7 +25,7 @@ let kucing1 = { nama: "Milo" };
 let kucing2 = kucing1; // kucing2 menyalin ALAMAT objek yang sama
 kucing2.nama = "Oyen"; // ubah lewat kucing2
 console.log("Soal 2 -> kucing1.nama =", kucing1.nama);
-// PREDIKSI SAYA: kucing1.nama = "Milo"
+// PREDIKSI SAYA: kucing1.nama = "Oyen"
 
 // ---------- SOAL 3: kirim angka ke fungsi ----------
 function ubahAngka(n) {
@@ -43,7 +43,7 @@ function ubahKucing(k) {
 let kucing3 = { nama: "Milo" };
 ubahKucing(kucing3);
 console.log("Soal 4 -> kucing3.nama =", kucing3.nama);
-// PREDIKSI SAYA: kucing3.nama = Milo
+// PREDIKSI SAYA: kucing3.nama = "Bulu"
 
 // ---------- SOAL 5: kirim objek ke fungsi, lalu GANTI SELURUHNYA ----------
 function gantiKucing(k) {
@@ -68,9 +68,15 @@ console.log("Soal 5 -> kucing4.nama =", kucing4.nama);
 // ============================================================
 
 // JAWABAN SAYA:
-// a)
+// a) `b = a` menyalin NILAI angka 10. b dan a adalah dua wadah terpisah,
+  //    jadi mengubah b tidak menyentuh a. Soal 3 sama: parameter `n` menerima
+  //    salinan nilai, bukan variabel aslinya.
 //
-// b)
+// b)  `kucing2 = kucing1` menyalin ALAMAT objek, bukan isinya. Keduanya
+  //    menunjuk objek yang SAMA, jadi mengubah lewat kucing2 ikut terlihat
+  //    di kucing1. Soal 4 sama: parameter `k` menerima alamat objek yang sama.
 //
-// c)
+// c)  Soal 4 `k.nama = "Bulu"` mengubah ISI objek -> objek asli berubah.
+  //    Soal 5 `k = { nama: "Baru" }` membuat objek BARU dan menulis alamatnya
+  //    ke variabel lokal `k` -> objek lama tidak tersentuh, jadi tetap "Milo".
 //
