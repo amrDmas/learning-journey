@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing & coverage
+coverage/
+.nyc_output/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Firebase (kredensial admin & emulator — jangan pernah di-commit)
+.firebase/
+serviceAccountKey.json
+*-service-account.json
+.firebaserc.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
