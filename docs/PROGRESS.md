@@ -12,7 +12,8 @@ apa yang dikerjakan, apa yang masih bingung, dan bagaimana akhirnya terpecahkan.
 
 | Tanggal | Fase | Topik | Yang dibuat | Yang masih bingung | Link commit/PR |
 |---------|------|-------|-------------|--------------------|----------------|
-| | | | | | |
+| 2026-10-05 | 00–01 | Setup repo + Git workflow | Repo `learning-journey`, kurikulum 11 fase, PR #1 | Alur PR sudah jelas | `bd792e6`, PR #1 |
+| 2026-10-05 | 01 | Value vs reference (menyalin nilai vs alamat) | `latihan.js` + `pembahasan.md` | — (sudah paham setelah 3x penjelasan) | `96400cb`, PR #1 |
 
 <!-- isi tiap selesai sesi belajar -->
 
