@@ -1,0 +1,52 @@
+# ============================================================
+# .gitattributes — aturan penanganan file untuk repo ini
+# ============================================================
+# File ini memastikan semua kontributor (Windows / Mac / Linux)
+# memperlakukan akhir baris dengan cara yang sama, sehingga diff
+# tidak penuh "perubahan palsu" hanya karena beda sistem operasi.
+#
+# Baca: https://git-scm.com/docs/gitattributes
+
+# --- Akhir baris (line endings) ---
+# Normalisasi otomatis: simpan sebagai LF di repo, apa pun OS-nya.
+* text=auto
+
+# File teks: selalu LF di repo, dan checkout sebagai LF.
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+
+# File yang dipakai di Windows: checkout sebagai CRLF.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# --- File biner: jangan diubah Git ---
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+
+# --- Git diff & merge ---
+# File lock dependency: jangan tampilkan di diff (bising, tidak berguna).
+package-lock.json  -diff
+yarn.lock          -diff
+pnpm-lock.yaml     -diff
+
+# --- Linguist (tampilan bahasa di GitHub) ---
+# Tandai file dokumentasi agar tidak dihitung sebagai kode.
+docs/**  linguist-documentation
+*.md     linguist-documentation
