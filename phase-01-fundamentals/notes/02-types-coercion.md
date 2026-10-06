@@ -110,7 +110,7 @@ v === null              // true — ini yang benar
 
 ### `typeof` pada variabel yang belum dideklarasikan
 
-Satu-satunya operator yang **tidak** melempar error untuk identifier yang belum ada:
+`typeof` sengaja **tidak** melempar error untuk identifier yang belum ada (berbeda dari operator lain, yang umumnya melempar `ReferenceError`):
 
 ```js
 typeof variabelYangTidakAda   // "undefined" (tidak error)
@@ -250,7 +250,7 @@ const a = []; console.log(a === a);   // true  ← referensi yang sama
 2. **`null == undefined`** → `true` (dan hanya satu sama lain).
 3. **number vs string** → string dikonversi ke number.
 4. **boolean vs apa pun** → boolean dikonversi ke number dulu.
-5. **object vs primitive** → object dikonversi ke primitive (`ToPrimitive`, memakai `valueOf` lalu `toString`).
+5. **object vs primitive** → object dikonversi ke primitive (`ToPrimitive`, biasanya `valueOf` lalu `toString`). Pengecualian: untuk `Date`, `toString` didahulukan — itulah kenapa `new Date(0) == 0` bernilai `false`, bukan `true`.
 
 ```js
 // 1. tipe sama
@@ -304,7 +304,7 @@ Bandingkan dengan `x === null` yang hanya menangkap `null` saja.
 
 ### `+` vs `-` — kenapa hasilnya bisa beda jauh
 
-- Operator `+` **ganda fungsi**: kalau salah satu operand string → **concatenation** (penggabungan teks).
+- Operator `+` **ganda fungsi**: kedua operand di-`ToPrimitive` dulu; kalau **salah satunya (setelah konversi itu) berupa string** → **concatenation** (penggabungan teks). Karena itu `1 + {}` → `"1[object Object]"`, bukan `1`.
 - Operator `-` (juga `*`, `/`) **selalu numerik** → memaksa konversi ke number.
 
 ```js
@@ -317,7 +317,7 @@ Bandingkan dengan `x === null` yang hanya menangkap `null` saja.
 "1" + 2 + 3 // "123"  ← ("1"+2)="12", lalu "12"+3="123"
 ```
 
-> **Mental model:** `+` melihat operand kiri-ke-kanan. Begitu ketemu string, sisa perhitungan berubah jadi penggabungan teks. Karena itu "5" + 1 ≠ "5" - 1.
+> **Mental model:** `+` melihat operand kiri-ke-kanan; begitu salah satu operand berupa string, `+` **menggabungkan teks**, bukan menjumlahkan. Tapi ingat *precedence*: operator seperti `*` mengikat lebih kuat dan tetap dihitung numerik lebih dulu — mis. `1 + "2" * 3` → `1 + 6` → `7` (bukan `"123"`), dan `1 + 2 + "3" + 4 * 5` → `"33" + 20` → `"3320"`. Jadi bukan "semua setelah string jadi teks", melainkan sub-ekspresi ber-precedence tinggi tetap numerik. Karena itu "5" + 1 ≠ "5" - 1.
 
 ### Boolean context (truthy/falsy) juga coercion
 
@@ -343,7 +343,7 @@ console.log({} + []);
 
 ## 7. Truthy & Falsy — Daftar Lengkap
 
-Ada **tepat 8** value falsy di JavaScript. Selain ini, semuanya truthy.
+Ada **8** value falsy yang berupa primitive di JavaScript (lihat catatan di bawah untuk satu pengecualian khusus browser). Selain ini, semuanya truthy.
 
 | Falsy | Catatan |
 |---|---|
@@ -355,6 +355,8 @@ Ada **tepat 8** value falsy di JavaScript. Selain ini, semuanya truthy.
 | `null` | |
 | `undefined` | |
 | `NaN` | |
+
+> **Catatan:** kedelapan nilai di atas adalah satu-satunya falsy di **Node/JS murni**. Di browser ada satu keanehan warisan lama: `document.all` juga bersifat falsy (`Boolean(document.all) === false`) meskipun ia bertipe `object` — satu-satunya object falsy di JavaScript. Ini perilaku khusus browser yang sudah deprecated; di Node `document` bahkan tidak ada (`typeof document === "undefined"`). Jadi untuk praktik sehari-hari, hafalkan 8 nilai di atas dan ingat bahwa **semua object normal (termasuk `[]` dan `{}`) selalu truthy**.
 
 Yang **sering disangka falsy tapi sebenarnya truthy**:
 
@@ -506,6 +508,11 @@ Ini **bukan bug JS**, tapi konsekuensi representasi biner: `0.1` dan `0.2` tidak
 // 2. Bandingkan dengan toleransi (epsilon)
 const eps = Number.EPSILON;
 Math.abs((0.1 + 0.2) - 0.3) < eps // true
+// Hati-hati: ini toleransi ABSOLUT, jadi hanya andal untuk angka berorde ~1.
+// Untuk angka besar, selisihnya ikut membesar dan ambang tetap `eps` akan gagal
+// (mis. Math.abs((0.1+0.2)*10 - 0.3*10) < eps → false). Untuk kasus umum,
+// pakai toleransi relatif terhadap besarnya angka, mis.
+// Math.abs(a - b) <= Number.EPSILON * Math.max(Math.abs(a), Math.abs(b), 1)
 
 // 3. Untuk uang: hitung dalam satuan terkecil (sen/rupiah), bukan float
 const harga = 1999;   // rupiah, integer
@@ -706,10 +713,13 @@ console.log(arr[2].x);          // 999 ← BAHAYA! nested dibagi
 ### Deep copy dengan `structuredClone` (modern, direkomendasikan)
 
 ```js
-const deep = structuredClone(asli);
+// Blok ini mandiri: `asli` di atas sudah ikut berubah oleh shallow copy,
+// jadi di sini kita pakai object baru supaya hasilnya jelas.
+const sumber = { nama: "Dimas", alamat: { kota: "Bandung", kode: "40111" } };
+const deep = structuredClone(sumber);
 
 deep.alamat.kota = "Surabaya";
-console.log(asli.alamat.kota);  // "Bandung" ← benar-benar terpisah
+console.log(sumber.alamat.kota);  // "Bandung" ← benar-benar terpisah
 ```
 
 `structuredClone` menangani `Date`, `Map`, `Set`, `RegExp`, `ArrayBuffer`, dan bahkan **referensi melingkar** (circular). Tapi **tidak bisa** meng-clone `function`, `Symbol`, node DOM, atau properti yang tidak "structured-cloneable".
@@ -865,7 +875,7 @@ Tulis ulang dengan bahasamu sendiri (jangan copas) — ini yang membuat mental m
 3. **Primitive immutable; object mutable.** `const` mengunci binding, bukan isi.
 4. **`===` tanpa konversi, `==` dengan konversi.** Default `===`. Satu-satunya `==` yang aman: `x == null`.
 5. **`+` bisa concat, `-` selalu numerik.** Itu sebabnya `"5"+1` beda dari `"5"-1`.
-6. **Ada 8 value falsy; semua object truthy** — termasuk `[]` dan `{}`.
+6. **Ada 8 value falsy (semuanya primitive); semua object normal truthy** — termasuk `[]` dan `{}`.
 7. **`NaN` bertipe number dan tidak sama dengan dirinya sendiri.** Pakai `Number.isNaN`, bukan `isNaN`.
 8. **Float punya batas presisi.** `0.1+0.2 ≠ 0.3`. Integer aman sampai `2^53-1`; lebih dari itu pakai `BigInt`.
 9. **`undefined` = default, `null` = sengaja kosong.**
