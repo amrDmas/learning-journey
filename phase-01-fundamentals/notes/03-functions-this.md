@@ -247,7 +247,7 @@ Segala hal yang "menyentuh dunia luar" atau mengubah state yang bisa diamati:
 - `Date.now()`, `Math.random()` (bikin tidak deterministik)
 
 ```js
-// TIDAK PURE — mengubah array dari luar
+// TIDAK PURE — mengubah variabel dari luar
 let total = 0;
 function tambahKeTotal(n) {
   total += n; // side effect
@@ -295,7 +295,7 @@ console.log(daftar);        // ?
 [1, 2, 3, 4]
 ```
 
-Penjelasan: `arr` adalah **referensi** ke array yang sama dengan `daftar`. `push` memutasi array itu → `daftar` ikut berubah. Inilah bedanya *reference* vs *value* yang dibahas di catatan 01.
+Penjelasan: parameter `arr` menerima **salinan alamat** (bukan salinan array-nya), jadi `arr` dan `daftar` menunjuk array yang sama. `push` mengubah isi array itu → `daftar` ikut berubah. (Catatan: JavaScript **selalu** *pass by value* — yang disalin adalah alamatnya. Istilah "pass by reference" sering dipakai orang secara longgar, tapi menyesatkan; lihat catatan 01 dan 02.)
 
 </details>
 
@@ -393,6 +393,15 @@ sapaDimas("!"); // "Halo, Dimas!"  <-- this sudah terkunci ke orang
 - `call` / `apply` → **langsung jalan**. Bedanya cuma format argumen (individual vs array).
 - `bind` → **tidak jalan sekarang**, mengembalikan function baru dengan `this` (dan argumen awal) yang "dikunci" permanen.
 
+Sifat "terkunci permanen" itu tidak bisa dibatalkan oleh `bind` berikutnya (atau `call`/`apply` di atas hasil `bind`): keduanya **diabaikan**, dan `this` tetap milik `bind` yang pertama. (Satu-satunya pengecualian: memanggil hasil `bind` dengan `new` — `new` selalu menang, lihat 6.7.)
+
+```js
+const lain = { nama: "Budi" };
+sapaDimas.call(lain, "?");              // "Halo, Dimas?" — this tetap orang, bukan lain
+const sapaLagi = sapaDimas.bind(lain);  // bind berulang: yang menang tetap bind pertama
+sapaLagi("!");                          // "Halo, Dimas!" — bukan "Budi"
+```
+
 `bind` berguna untuk method yang akan dipakai sebagai callback:
 
 ```js
@@ -418,7 +427,7 @@ const kucing = {
     console.log(this.nama); // this di sini = this dari scope luar (bukan kucing!)
   },
 };
-kucing.suara(); // script non-module: undefined (this = window/global, .nama tidak ada); ES module: TypeError (this = undefined)
+kucing.suara(); // skrip non-module: undefined (this = objek top-level: window di browser, module.exports di Node CommonJS; .nama tidak ada); ES module: TypeError (this = undefined)
 ```
 
 Contoh di mana arrow **menyelamatkan** kita — method dengan callback:
@@ -450,7 +459,7 @@ const penghitungRusak = {
 };
 ```
 
-Ini jebakan `setTimeout`/`setInterval` yang klasik: callback `function` biasa dipanggil **tanpa objek**, jadi `this` jatuh ke default. Solusinya: pakai arrow, atau `.bind(this)`.
+Ini jebakan `setTimeout`/`setInterval` yang klasik: callback `function` biasa tidak dipanggil sebagai method dari objek kita, jadi `this` bukan objek itu — di browser `this` = `window`, sedangkan di Node bukan `globalThis` melainkan objek timer (`Timeout`). Solusinya: pakai arrow, atau `.bind(this)`.
 
 ### 6.6 Constructor Binding (`new`)
 
@@ -463,6 +472,16 @@ function Orang(nama) {
 
 const d = new Orang("Dimas");
 console.log(d.nama); // "Dimas"
+```
+
+Kalau constructor mengembalikan **objek eksplisit**, objek itulah yang dipakai (objek `new` tadi dibuang). Kalau yang dikembalikan nilai primitif (atau `null`), nilai itu **diabaikan** dan tetap objek baru yang dipakai:
+
+```js
+function A() { this.x = 1; return { y: 2 }; }
+function B() { this.x = 1; return 42; }
+
+new A(); // { y: 2 }      <-- return objek eksplisit menang
+new B(); // B { x: 1 }    <-- return primitif diabaikan
 ```
 
 Arrow function **tidak bisa** dipakai dengan `new`:
@@ -515,10 +534,10 @@ g();                     // ?
 halo1: Dimas      // implicit binding
 halo2: undefined  // arrow mewarisi this dari module/global, bukan user
 halo1: undefined  // method dilepas → default binding (this = global, .nama tidak ada)
-Dimas             // bind mengunci this ke user
+halo1: Dimas      // bind mengunci this ke user
 ```
 
-Di ES module: `f()` dan `halo2` keduanya melempar `TypeError: Cannot read properties of undefined (reading 'nama')` (di module, `this` top-level = `undefined`). Sedangkan di strict script (non-module), `this` top-level tetap `window`, jadi `halo2` tidak error — hanya `f()` yang error karena `this` = `undefined`. Itu justru bagus — errornya jujur.
+Di ES module: `f()` dan `halo2` keduanya melempar `TypeError: Cannot read properties of undefined (reading 'nama')` (di module, `this` top-level = `undefined`). Sedangkan di strict script (non-module), `this` top-level tetap objek top-level (`window` di browser, `module.exports` di Node CommonJS), jadi `halo2` tidak error — hanya `f()` yang error karena `this` = `undefined`. Itu justru bagus — errornya jujur.
 
 </details>
 
@@ -611,30 +630,31 @@ function tambahCurry(a) {
 console.log(tambahCurry(2)(3)); // 5
 ```
 
-Dengan arrow jadi ringkas:
+Dengan arrow jadi ringkas (pakai nama lain supaya tidak bentrok kalau kedua blok dijalankan dalam satu file):
 
 ```js
-const tambahCurry = (a) => (b) => a + b;
+const tambahCurryRingkas = (a) => (b) => a + b;
 ```
 
 **Partial application** = "mengunci" sebagian argumen lebih dulu, sisanya nanti. (Secara praktik sering dicampur dengan `bind`.)
 
 ```js
-const tambah = (a, b) => a + b;
-const tambahLima = tambah.bind(null, 5); // argumen pertama dikunci
+const tambahDasar = (a, b) => a + b;
+const tambahLima = tambahDasar.bind(null, 5); // argumen pertama dikunci
 console.log(tambahLima(10)); // 15
 ```
 
 **Kenapa berguna?** Membuat function yang lebih spesifik dari function umum, tanpa mengulang kode:
 
 ```js
-const log = (level) => (pesan) => console.log(`[${level}] ${pesan}`);
+// pakai nama lain supaya tidak bentrok dengan `log` (§3.2) dan `info` (§3) kalau blok digabung
+const buatLog = (level) => (pesan) => console.log(`[${level}] ${pesan}`);
 
-const info = log("INFO");
-const error = log("ERROR");
+const logInfo = buatLog("INFO");
+const logError = buatLog("ERROR");
 
-info("server menyala");  // [INFO] server menyala
-error("koneksi putus");  // [ERROR] koneksi putus
+logInfo("server menyala");  // [INFO] server menyala
+logError("koneksi putus");  // [ERROR] koneksi putus
 ```
 
 ### Prediksi Output
